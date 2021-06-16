@@ -1,0 +1,208 @@
+#install.packages("readxl")
+#install.packages("sqldf")
+#install.packages("ggplot2")
+library(readxl)
+library(sqldf)
+
+contadores_julho = 
+read_excel("J:/06 - FISCAL/00 - CONTADORES MENSAIS/03 - PLANILHAS DOS IP'S DO EME - 05 AGO 19.xlsx",
+sheet ="Planilha1",n_max = 53)
+
+dim(contadores_julho)
+colnames(contadores_julho)
+
+
+#sqldf("select * from contadores_julho")
+
+names(contadores_julho)[2] = c("TIPO_IMPRESSAO")
+names(contadores_julho)[16:17] = c("prod_PB", "prod_COR")
+
+#sqldf("select * from contadores_julho")
+
+
+contadores_julho = sqldf("
+select
+	*,
+	case
+		when Departamento like '1°%S%' then '1ªSCh'
+		when Departamento like '2°%S%' then '2ªSCh'
+		when Departamento like '3°%S%' or Departamento like 'TSA - BL%' then '3ªSCh'
+		when Departamento like '4°%S%' then '4ªSCh'
+		when Departamento like '5°%S%' then '5ªSCh'
+		when Departamento like '6°%S%' then '6ªSCh'
+		when Departamento like 'SG1%' then 'SG1'
+		when Departamento like 'SG2%' then 'SG2'
+		when Departamento like 'SG3%' then 'SG3'
+		when Departamento like 'SG%4%' then 'SG4'
+		when Departamento like 'SG%5%' then 'SG5'
+		when Departamento like 'SG6%' then 'SG6'
+		when Departamento like 'EPE%' then 'EPEx'
+		when Departamento = 'SETOR DE GARAGENS' then 'SETOR_GARAGENS'
+		when Departamento = 'SALA DO OD' then 'SALA_OD'
+		when Departamento = 'ASSESSORIA ADMINISTRATIVA' then 'ASSESSORIA'
+		when Departamento like 'TEN MOTA%' or Departamento like 'CHEFIA EME%' then 'CH_EME'
+		else Departamento
+	end as Subchefia
+from contadores_julho
+order by Subchefia
+")
+sqldf("select distinct Departamento,Subchefia from contadores_julho")
+
+
+colnames(contadores_julho)
+
+## Tipos de impressora por departamento
+IMPRESSORAS_DEPARTAMENTO = 
+sqldf("
+	select distinct a.Subchefia, 
+		(select count(TIPO_IMPRESSAO) from contadores_julho where Subchefia=a.Subchefia and TIPO_IMPRESSAO = 'COR') as IMPRESSORAS_COLORIDAS,
+		(select count(TIPO_IMPRESSAO) from contadores_julho where Subchefia=a.Subchefia and TIPO_IMPRESSAO = 'PB') as IMPRESSORAS_PRETOBRANCO
+	from contadores_julho as a
+	order by a.Subchefia
+")
+IMPRESSORAS_DEPARTAMENTO
+
+### Produção por departamento
+
+IMPRESSOES_DEPARTAMENTO = 
+sqldf("
+	select distinct Subchefia, 
+		 sum(prod_COR) Impressoes_cor,
+		 sum(prod_PB) Impressoes_pb
+	from contadores_julho 
+	group by Subchefia
+")
+IMPRESSOES_DEPARTAMENTO
+
+
+### EXPORTAR PARA PLANILHA
+#install.packages("xlsReadWrite")
+library(xlsReadWrite)
+write.xls(IMPRESSOES_DEPARTAMENTO, "J:/06 - FISCAL/00 - CONTADORES MENSAIS/IMPRESSOES_DEPARTAMENTO.xls") 
+
+
+
+Info_Departamento =
+sqldf("
+	select a.Subchefia,
+		 a.IMPRESSORAS_COLORIDAS,
+		 b.Impressoes_cor,
+		 case when Impressoes_cor>0 then Impressoes_cor/IMPRESSORAS_COLORIDAS else 0 end as media_cor,
+		 a.IMPRESSORAS_PRETOBRANCO,
+		 b.Impressoes_pb,
+		 case when IMPRESSORAS_PRETOBRANCO>0 then Impressoes_pb/IMPRESSORAS_PRETOBRANCO else Impressoes_pb/IMPRESSORAS_COLORIDAS end as media_pb
+	from IMPRESSORAS_DEPARTAMENTO a
+	left join IMPRESSOES_DEPARTAMENTO b on a.Subchefia= b.Subchefia
+")
+Info_Departamento
+
+Info_Impressoes = 
+sqldf("
+	select 
+		sum(Impressoes_cor) as Impressoes_Coloridas,
+		sum(Impressoes_pb) as Impressoes
+	from Info_Departamento
+")
+Info_Impressoes
+
+
+
+#library(ggplot2)
+
+# Total de Impressões coloridas
+text(barplot(Info_Departamento$Impressoes_cor,col='steelblue',border = TRUE ,
+			#xlab="Departamento",
+	ylab="Impressões Coloridas",main = "Impressões Coloridas por Departamento"), 
+	par("usr")[3], 
+	labels = Info_Departamento$Subchefia, 
+	srt = 35, 
+	adj = c(1.1,1.1), xpd = TRUE, cex=0.6) 
+
+# Total de Impressões preto e branco
+text(barplot(Info_Departamento$Impressoes_pb,col='steelblue',border = TRUE ,
+			#xlab="Departamento",
+			ylab="Impressões Preto e Branco",main = "Impressões Preto e Branco por Departamento"), 
+	par("usr")[3], 
+	labels = Info_Departamento$Subchefia, 
+	srt = 35, 
+	adj = c(1.1,1.1), xpd = TRUE, cex=0.6) 
+
+# Média de Impressões
+text(barplot(Info_Departamento$media_cor,col='steelblue',border = TRUE ,
+			#xlab="Departamento",
+	ylab="Média de Impressões Coloridas",main = "Média de Impressões Coloridas por Departamento"), 
+	par("usr")[3], 
+	labels = Info_Departamento$Subchefia, 
+	srt = 35, 
+	adj = c(1.1,1.1), xpd = TRUE, cex=0.6) 
+
+
+text(barplot(Info_Departamento$media_pb,col='steelblue',border = TRUE ,
+			#xlab="Departamento",
+			ylab="Média de Impressões Preto e Branco",main = "Média de Impressões Preto e Branco por Departamento"), 
+	par("usr")[3], 
+	labels = Info_Departamento$Subchefia, 
+	srt = 35, 
+	adj = c(1.1,1.1), xpd = TRUE, cex=0.6) 
+
+# Total de Impressoes PB x COR
+
+Impressoes = sqldf(
+	"select 'COR' as Tipo_Imp, Impressoes_Coloridas as Impressoes from Info_Impressoes"	
+)
+
+Impressoes2 =sqldf(
+	"select 'PB' as Tipo_Imp, Impressoes as Impressoes from Info_Impressoes"	
+)
+Impressoes = rbind(Impressoes,Impressoes2)
+Impressoes
+
+# Gráfico de Pizza
+
+nomes2 = Impressoes$Tipo_Imp
+porcent2 = round(Impressoes$Impressoes/sum(Impressoes$Impressoes)*100,2)
+pie(x = Impressoes$Impressoes,
+	labels=paste(nomes2," (",porcent2,"%",")",sep=""),   
+      main = "Total de Impressões", col=c("white","gray")) 
+
+# Gráfico Box-Plot
+
+Info_Departamento[c('Impressoes_cor','Impressoes_pb')]
+
+boxplot(Info_Departamento$Impressoes_cor,data=Info_Departamento, main="Distribuição de Impressões Coloridas", 
+   xlab="", ylab="Nº de Impressões",stats)
+
+boxplot(Info_Departamento$Impressoes_pb,
+	data=Info_Departamento, main="Distribuição de Impressões Preto e Branco", 
+   xlab="", ylab="Nº de Impressões")
+
+
+ImpressoesCOR =  cbind(Info_Departamento$Impressoes_cor,'COR')
+ImpressoesPB =  cbind(Info_Departamento$Impressoes_pb,'PB')
+
+Info_Impressoes = rbind(ImpressoesCOR,ImpressoesPB)
+
+Info_Impressoes = as.data.frame(Info_Impressoes)
+
+colnames(Info_Impressoes) = c("Impressoes", "TipoImp")
+
+class(Info_Impressoes$Impressoes)
+
+Info_Impressoes$Impressoes = as.numeric(as.character(Info_Impressoes$Impressoes))
+
+boxplot(Impressoes~TipoImp,
+	data=Info_Impressoes, main="Distribuição de Impressões", 
+   xlab="", ylab="Nº de Impressões",range = 3.0)
+
+
+
+################################################################################
+#install.packages("ggplot2")
+#library(ggplot2)
+df = Info_Departamento
+dfm <- melt(df[,c('Departamento','media_pb','media_cor')],id.vars = 1)
+
+ggplot(dfm,aes(x = Departamento,y = value)) + 
+    geom_bar(aes(fill = variable),stat = "identity",position = "dodge") + 
+    scale_y_log10()
+################################################################################
