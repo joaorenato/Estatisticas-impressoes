@@ -8,8 +8,8 @@ contadores_julho =
 read_excel("J:/06 - FISCAL/00 - CONTADORES MENSAIS/03 - PLANILHAS DOS IP'S DO EME - 05 AGO 19.xlsx",
 sheet ="Planilha1",n_max = 53)
 
-dim(contadores_julho)
-colnames(contadores_julho)
+dim(contadores_julho) # conta o numero de linhas e colunas da tabela
+colnames(contadores_julho) # display os nomes das colunas da tabela
 
 
 #sqldf("select * from contadores_julho")
@@ -24,12 +24,12 @@ contadores_julho = sqldf("
 select
 	*,
 	case
-		when Departamento like '1°%S%' then '1ªSCh'
-		when Departamento like '2°%S%' then '2ªSCh'
-		when Departamento like '3°%S%' or Departamento like 'TSA - BL%' then '3ªSCh'
-		when Departamento like '4°%S%' then '4ªSCh'
-		when Departamento like '5°%S%' then '5ªSCh'
-		when Departamento like '6°%S%' then '6ªSCh'
+		when Departamento like '1Â°%S%' then '1ÂªSCh'
+		when Departamento like '2Â°%S%' then '2ÂªSCh'
+		when Departamento like '3Â°%S%' or Departamento like 'TSA - BL%' then '3ÂªSCh'
+		when Departamento like '4Â°%S%' then '4ÂªSCh'
+		when Departamento like '5Â°%S%' then '5ÂªSCh'
+		when Departamento like '6Â°%S%' then '6ÂªSCh'
 		when Departamento like 'SG1%' then 'SG1'
 		when Departamento like 'SG2%' then 'SG2'
 		when Departamento like 'SG3%' then 'SG3'
@@ -62,7 +62,7 @@ sqldf("
 ")
 IMPRESSORAS_DEPARTAMENTO
 
-### Produção por departamento
+### ProduÃ§Ã£o por departamento
 
 IMPRESSOES_DEPARTAMENTO = 
 sqldf("
@@ -109,28 +109,28 @@ Info_Impressoes
 
 #library(ggplot2)
 
-# Total de Impressões coloridas
+# Total de ImpressÃµes coloridas
 text(barplot(Info_Departamento$Impressoes_cor,col='steelblue',border = TRUE ,
 			#xlab="Departamento",
-	ylab="Impressões Coloridas",main = "Impressões Coloridas por Departamento"), 
+	ylab="ImpressÃµes Coloridas",main = "ImpressÃµes Coloridas por Departamento"), 
 	par("usr")[3], 
 	labels = Info_Departamento$Subchefia, 
 	srt = 35, 
 	adj = c(1.1,1.1), xpd = TRUE, cex=0.6) 
 
-# Total de Impressões preto e branco
+# Total de ImpressÃµes preto e branco
 text(barplot(Info_Departamento$Impressoes_pb,col='steelblue',border = TRUE ,
 			#xlab="Departamento",
-			ylab="Impressões Preto e Branco",main = "Impressões Preto e Branco por Departamento"), 
+			ylab="ImpressÃµes Preto e Branco",main = "ImpressÃµes Preto e Branco por Departamento"), 
 	par("usr")[3], 
 	labels = Info_Departamento$Subchefia, 
 	srt = 35, 
 	adj = c(1.1,1.1), xpd = TRUE, cex=0.6) 
 
-# Média de Impressões
+# MÃ©dia de ImpressÃµes
 text(barplot(Info_Departamento$media_cor,col='steelblue',border = TRUE ,
 			#xlab="Departamento",
-	ylab="Média de Impressões Coloridas",main = "Média de Impressões Coloridas por Departamento"), 
+	ylab="MÃ©dia de ImpressÃµes Coloridas",main = "MÃ©dia de ImpressÃµes Coloridas por Departamento"), 
 	par("usr")[3], 
 	labels = Info_Departamento$Subchefia, 
 	srt = 35, 
@@ -139,7 +139,7 @@ text(barplot(Info_Departamento$media_cor,col='steelblue',border = TRUE ,
 
 text(barplot(Info_Departamento$media_pb,col='steelblue',border = TRUE ,
 			#xlab="Departamento",
-			ylab="Média de Impressões Preto e Branco",main = "Média de Impressões Preto e Branco por Departamento"), 
+			ylab="MÃ©dia de ImpressÃµes Preto e Branco",main = "MÃ©dia de ImpressÃµes Preto e Branco por Departamento"), 
 	par("usr")[3], 
 	labels = Info_Departamento$Subchefia, 
 	srt = 35, 
@@ -157,24 +157,24 @@ Impressoes2 =sqldf(
 Impressoes = rbind(Impressoes,Impressoes2)
 Impressoes
 
-# Gráfico de Pizza
+# GrÃ¡fico de Pizza
 
 nomes2 = Impressoes$Tipo_Imp
 porcent2 = round(Impressoes$Impressoes/sum(Impressoes$Impressoes)*100,2)
 pie(x = Impressoes$Impressoes,
 	labels=paste(nomes2," (",porcent2,"%",")",sep=""),   
-      main = "Total de Impressões", col=c("white","gray")) 
+      main = "Total de ImpressÃµes", col=c("white","gray")) 
 
-# Gráfico Box-Plot
+# GrÃ¡fico Box-Plot
 
 Info_Departamento[c('Impressoes_cor','Impressoes_pb')]
 
-boxplot(Info_Departamento$Impressoes_cor,data=Info_Departamento, main="Distribuição de Impressões Coloridas", 
-   xlab="", ylab="Nº de Impressões",stats)
+boxplot(Info_Departamento$Impressoes_cor,data=Info_Departamento, main="DistribuiÃ§Ã£o de ImpressÃµes Coloridas", 
+   xlab="", ylab="NÂº de ImpressÃµes",stats)
 
 boxplot(Info_Departamento$Impressoes_pb,
-	data=Info_Departamento, main="Distribuição de Impressões Preto e Branco", 
-   xlab="", ylab="Nº de Impressões")
+	data=Info_Departamento, main="DistribuiÃ§Ã£o de ImpressÃµes Preto e Branco", 
+   xlab="", ylab="NÂº de ImpressÃµes")
 
 
 ImpressoesCOR =  cbind(Info_Departamento$Impressoes_cor,'COR')
@@ -191,8 +191,8 @@ class(Info_Impressoes$Impressoes)
 Info_Impressoes$Impressoes = as.numeric(as.character(Info_Impressoes$Impressoes))
 
 boxplot(Impressoes~TipoImp,
-	data=Info_Impressoes, main="Distribuição de Impressões", 
-   xlab="", ylab="Nº de Impressões",range = 3.0)
+	data=Info_Impressoes, main="DistribuiÃ§Ã£o de ImpressÃµes", 
+   xlab="", ylab="NÂº de ImpressÃµes",range = 3.0)
 
 
 
